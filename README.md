@@ -18,7 +18,7 @@ This guide explains how to **deploy multiple Node.js projects** on a single AWS 
 
 ### 2. SSH Into the Instance
 
-```bash
+
 ssh -i <your-key.pem> ubuntu@<your-ec2-ip>
 ###3. Update Server & Install Essentials
 bash
