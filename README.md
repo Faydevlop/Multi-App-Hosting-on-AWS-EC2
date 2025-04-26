@@ -82,7 +82,7 @@ cd project
 npm install
 
 # Set up environment (if needed)
-cp .env.example .env
+nano .env (copy past your env file here)
 # Edit the .env file with your settings
 
 # Start the application with PM2
