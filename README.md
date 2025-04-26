@@ -1,99 +1,114 @@
-from pathlib import Path
+# Hosting Multiple Projects on a Single Instance
+## A Comprehensive Guide for Students
 
-readme_content = """
-# 🟢 Node.js Multi-App Hosting on AWS EC2 with Free SSL & Nginx
+This guide will walk you through the process of deploying multiple web projects on a single AWS EC2 instance using industry-standard tools and best practices.
 
-This guide explains how to **deploy multiple Node.js projects** on a single AWS EC2 (Ubuntu 22.04) instance using **PM2**, **Nginx reverse proxy**, and **free SSL from Let's Encrypt**.
+## 📋 Overview
 
----
+Using a single server to host multiple projects is a cost-effective approach that's perfect for:
+- Personal portfolios
+- Course assignments
+- Small startup projects
+- Testing environments
 
-## 🚀 Installation Steps
+## 🔧 Technologies We'll Use
 
-### 1. Launch Your EC2 Ubuntu Server
-- Choose **Ubuntu 22.04 LTS**.
-- Assign a **static Elastic IP** to the instance.
-- Make sure the Security Group allows **HTTP (80)**, **HTTPS (443)**, and custom **TCP ports** (e.g., 3000, 4000, 5000).
+- **AWS EC2** - Cloud-based virtual server
+- **Ubuntu 22.04** - Server operating system
+- **Node.js** - JavaScript runtime
+- **PM2** - Process manager to keep apps running
+- **Nginx** - Web server and reverse proxy
+- **Let's Encrypt** - Free SSL certificates
 
----
+## 🚀 Step-by-Step Installation Guide
 
-### 2. SSH Into the Instance
+### 1. Set Up Your EC2 Instance
 
+1. Launch an EC2 instance with Ubuntu 22.04 LTS
+2. Configure security groups to allow HTTP (80), HTTPS (443), and SSH (22)
+3. Assign an Elastic IP for a static address
+4. Configure your domain DNS to point to this IP
 
-ssh -i <your-key.pem> ubuntu@<your-ec2-ip>
-###3. Update Server & Install Essentials
-bash
-Always show details
+### 2. Initial Server Setup
 
-Copy
+Connect to your instance:
+```bash
+ssh -i your-key.pem ubuntu@your-instance-ip
+```
+
+Update the system:
+```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y git htop wget curl
-4. Install Node.js (Using NVM)
-4.1 Install NVM (Node Version Manager)
-bash
-Always show details
+```
 
-Copy
+### 3. Install Node.js Using NVM
+
+```bash
+# Install NVM
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-4.2 Load NVM into Shell
-bash
-Always show details
 
-Copy
+# Load NVM
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"
-4.3 Install Node.js
-bash
-Always show details
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-Copy
+# Install Node.js LTS
 nvm install --lts
-4.4 Verify Installation
-bash
-Always show details
 
-Copy
+# Verify installation
 node -v
 npm -v
-5. Clone Your Projects
-bash
-Always show details
+```
 
-Copy
-git clone https://github.com/yourusername/project1.git
-git clone https://github.com/yourusername/project2.git
-git clone https://github.com/yourusername/project3.git
-Repeat the following steps inside each project folder:
+### 4. Install PM2 (Process Manager)
 
-bash
-Always show details
+PM2 will keep your applications running even after server restarts:
 
-Copy
-cd project1
+```bash
+npm install -g pm2
+```
+
+### 5. Clone and Configure Your Projects
+
+For each project:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/project.git
+cd project
+
+# Install dependencies
 npm install
-cp .env.example .env   # if applicable
-pm2 start app.js --name project1
-Make sure each app listens on a unique port (e.g., 3000, 4000, 5000).
 
-6. Install and Configure Nginx
-bash
-Always show details
+# Set up environment (if needed)
+cp .env.example .env
+# Edit the .env file with your settings
 
-Copy
-sudo apt install nginx
-Edit the default Nginx config file:
+# Start the application with PM2
+pm2 start app.js --name project-name
+```
 
-bash
-Always show details
+**Important:** Make sure each project listens on a different port!
+- Project 1: Port 3000
+- Project 2: Port 4000
+- Project 3: Port 5000
 
-Copy
+### 6. Set Up Nginx as a Reverse Proxy
+
+Install Nginx:
+```bash
+sudo apt install -y nginx
+```
+
+Create configuration for your projects:
+```bash
 sudo nano /etc/nginx/sites-available/default
-Paste the following config (customize your domains and ports):
+```
 
-nginx
-Always show details
+Add this configuration (customize for your domains):
 
-Copy
+```nginx
 server {
     listen 80;
     server_name project1.yourdomain.com;
@@ -135,73 +150,77 @@ server {
         proxy_cache_bypass $http_upgrade;
     }
 }
-Test and restart Nginx:
+```
 
-bash
-Always show details
-
-Copy
+Test and apply the configuration:
+```bash
 sudo nginx -t
 sudo service nginx restart
-7. Install Free SSL with Certbot (Let's Encrypt)
-bash
-Always show details
+```
 
-Copy
-sudo apt install certbot python3-certbot-nginx
-Generate certificates for your subdomains:
+### 7. Implement Free SSL with Let's Encrypt
 
-bash
-Always show details
+```bash
+# Install Certbot
+sudo apt install -y certbot python3-certbot-nginx
 
-Copy
+# Generate certificates
 sudo certbot --nginx -d project1.yourdomain.com -d project2.yourdomain.com -d project3.yourdomain.com
-Enable auto-renewal:
 
-bash
-Always show details
-
-Copy
+# Test auto-renewal
 sudo certbot renew --dry-run
-✅ Final Checklist
-✅ Each Node.js project is running on a different port
+```
 
-✅ PM2 keeps apps alive and restarts them on crash
+### 8. Configure PM2 to Start on Boot
 
-✅ Nginx routes each subdomain to the correct port
+```bash
+pm2 startup
+# Run the command that PM2 gives you
+pm2 save
+```
 
-✅ SSL is active via Let's Encrypt
+## 🔍 Monitoring and Maintenance
 
-🛠 Useful Commands
-bash
-Always show details
+### Check Status of Your Applications
+```bash
+pm2 status
+pm2 logs
+pm2 logs app-name
+```
 
-Copy
-pm2 status         # View running apps
-pm2 restart all    # Restart all apps
-pm2 logs           # View logs
-sudo nginx -t      # Check nginx config syntax
+### Nginx Commands
+```bash
+sudo nginx -t           # Test configuration
 sudo service nginx restart
-🙌 Done!
-Now your apps are live at:
+sudo service nginx status
+```
 
-https://project1.yourdomain.com
+### System Monitoring
+```bash
+htop                    # Interactive process viewer
+df -h                   # Disk usage
+```
 
-https://project2.yourdomain.com
+## 🛠️ Troubleshooting
 
-https://project3.yourdomain.com
+1. **Application not starting:** Check logs with `pm2 logs`
+2. **Nginx not routing properly:** Verify config with `sudo nginx -t`
+3. **SSL issues:** Run `sudo certbot certificates` to check certificate status
+4. **Permission problems:** Make sure your application has the right permissions to access files
 
-All served securely from one EC2 instance with Nginx and SSL 🚀
+## 📚 Additional Resources
 
-✍️ Author
-Crafted with care by Your Name """
+- [PM2 Documentation](https://pm2.keymetrics.io/docs/usage/quick-start/)
+- [Nginx Documentation](https://nginx.org/en/docs/)
+- [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
+- [Node.js Best Practices](https://github.com/goldbergyoni/nodebestpractices)
 
-output_path = Path("/mnt/data/EC2-NodeJS-MultiApp-Hosting-Guide.md") output_path.write_text(readme_content.strip())
+## 🎓 Assignment
 
-output_path.name
+For practice, try to:
+1. Deploy at least two different web applications on your EC2 instance
+2. Set up subdomains for each project
+3. Implement SSL for secure access
+4. Configure automatic application restart on server reboot
 
-Always show details
-
-Copy
-Result
-'EC2-NodeJS-MultiApp-Hosting-Guide.md'
+Good luck with your projects!
